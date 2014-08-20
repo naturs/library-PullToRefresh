@@ -46,7 +46,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	// Constants
 	// ===========================================================
 
-	static final boolean DEBUG = true;
+	static final boolean DEBUG = Utils.ENABLE_LOG;
 
 	static final boolean USE_HW_LAYERS = false;
 
@@ -76,13 +76,16 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	private boolean mIsBeingDragged = false;
 	private State mState = State.RESET;
 	private Mode mMode = Mode.getDefault();
-
+	
+	/** 当前的模式，如果是Mode.BOTH，则根据状态记录*/
 	private Mode mCurrentMode;
 	T mRefreshableView;
 	private FrameLayout mRefreshableViewWrapper;
 
 	private boolean mShowViewWhileRefreshing = true;
+	/** 刷新的时候是否可以滚动*/
 	private boolean mScrollingWhileRefreshingEnabled = false;
+	/** 是否要过滤事件*/
 	private boolean mFilterTouchEvents = true;
 	private boolean mOverScrollEnabled = true;
 	private boolean mLayoutVisibilityChangesEnabled = true;
@@ -126,6 +129,11 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		init(context, null);
 	}
 
+	// ============================================================================
+	// 注意：这里重写的是LinearLayout的方法，但是里面实现的是refreshableView的功能，
+	//       直接调用LinearLayout的任何addView方法，最终都会调用该方法，所以如果我
+	//       们要给该LinearLayout添加View，需要调用super.addView()方法。
+	// ============================================================================
 	@Override
 	public void addView(View child, int index, ViewGroup.LayoutParams params) {
 		if (DEBUG) {
@@ -222,15 +230,17 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		return mScrollingWhileRefreshingEnabled;
 	}
 
+	// 当前ViewGroup是LinearLayout
 	@Override
 	public final boolean onInterceptTouchEvent(MotionEvent event) {
 
+		// 我们的设置不允许下拉刷新，不拦截事件
 		if (!isPullToRefreshEnabled()) {
 			return false;
 		}
 
 		final int action = event.getAction();
-
+		
 		if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
 			mIsBeingDragged = false;
 			return false;
@@ -241,15 +251,27 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		}
 
 		switch (action) {
-			case MotionEvent.ACTION_MOVE: {
+			case MotionEvent.ACTION_DOWN:
+				if (isReadyForPull()) {
+					mLastMotionY = mInitialMotionY = event.getY();
+					mLastMotionX = mInitialMotionX = event.getX();
+					mIsBeingDragged = false;
+				}
+				break;
+				
+			case MotionEvent.ACTION_MOVE:
 				// If we're refreshing, and the flag is set. Eat all MOVE events
+				// 如果当前正在刷新，并且不允许滚动了，就拦截下接下来的事件
 				if (!mScrollingWhileRefreshingEnabled && isRefreshing()) {
 					return true;
 				}
 
 				if (isReadyForPull()) {
 					final float y = event.getY(), x = event.getX();
-					final float diff, oppositeDiff, absDiff;
+					final float 
+						diff,          // 刷新方向上的移动距离
+						oppositeDiff,  // 刷新方向垂直方向上的移动距离
+						absDiff;       // Math.abs(diff)
 
 					// We need to use the correct values, based on scroll
 					// direction
@@ -266,7 +288,11 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 					}
 					absDiff = Math.abs(diff);
 
-					if (absDiff > mTouchSlop && (!mFilterTouchEvents || absDiff > Math.abs(oppositeDiff))) {
+					// 1. absDiff > mTouchSlop，移动的距离已经大于系统设定的距离
+					// 2. 看是否需要过滤一下事件
+					if (absDiff > mTouchSlop && (!getFilterTouchEvents() || absDiff > Math.abs(oppositeDiff))) {
+						
+						// 可以进行下拉刷新（右拉刷新）了
 						if (mMode.showHeaderLoadingLayout() && diff >= 1f && isReadyForPullStart()) {
 							mLastMotionY = y;
 							mLastMotionX = x;
@@ -274,6 +300,8 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 							if (mMode == Mode.BOTH) {
 								mCurrentMode = Mode.PULL_FROM_START;
 							}
+							
+						// 可以进行上拉刷新（左拉刷新）了
 						} else if (mMode.showFooterLoadingLayout() && diff <= -1f && isReadyForPullEnd()) {
 							mLastMotionY = y;
 							mLastMotionX = x;
@@ -282,20 +310,14 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 								mCurrentMode = Mode.PULL_FROM_END;
 							}
 						}
+						
+						
 					}
 				}
 				break;
-			}
-			case MotionEvent.ACTION_DOWN: {
-				if (isReadyForPull()) {
-					mLastMotionY = mInitialMotionY = event.getY();
-					mLastMotionX = mInitialMotionX = event.getX();
-					mIsBeingDragged = false;
-				}
-				break;
-			}
 		}
-
+		
+		// true就拦截下事件
 		return mIsBeingDragged;
 	}
 
@@ -306,6 +328,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		}
 	}
 
+	// 一旦把事件拦截下来，接下来的事件都会传到下面这个方法里
 	@Override
 	public final boolean onTouchEvent(MotionEvent event) {
 
@@ -314,6 +337,8 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		}
 
 		// If we're refreshing, and the flag is set. Eat the event
+		// 这种情况在onInterceptTouchEvent是返回true的，也就拦截下
+		// 事件给当前方法处理，直接返回true就行了，代表处理了事件。
 		if (!mScrollingWhileRefreshingEnabled && isRefreshing()) {
 			return true;
 		}
@@ -531,6 +556,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	}
 
 	/**
+	 * 根据实际的View来决定刷新的方向，比如ListView的就是{@link Orientation#VERTICAL}
 	 * @return Either {@link Orientation#VERTICAL} or
 	 *         {@link Orientation#HORIZONTAL} depending on the scroll direction.
 	 */
@@ -943,6 +969,8 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	 * Helper method which just calls scrollTo() in the correct scrolling
 	 * direction.
 	 * 
+	 * <p>移动当前ViewGroup里面的内容，value<0为向下（右）移动，value>0为向上（左）移动</p>
+	 * 
 	 * @param value - New Scroll value
 	 */
 	protected final void setHeaderScroll(int value) {
@@ -1024,7 +1052,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		// We need to use the correct LayoutParam values, based on scroll
 		// direction
 		final LinearLayout.LayoutParams lp = getLoadingLayoutLayoutParams();
-
+		
 		// Remove Header, and then add Header Loading View again if needed
 		if (this == mHeaderLayout.getParent()) {
 			removeView(mHeaderLayout);
@@ -1142,6 +1170,10 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		updateUIForMode();
 	}
 
+	/**
+	 * 是否可以进行刷新操作了
+	 * @return
+	 */
 	private boolean isReadyForPull() {
 		switch (mMode) {
 			case PULL_FROM_START:
@@ -1177,7 +1209,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 				lastMotionValue = mLastMotionY;
 				break;
 		}
-
+		
 		switch (mCurrentMode) {
 			case PULL_FROM_END:
 				newScrollValue = Math.round(Math.max(initialMotionValue - lastMotionValue, 0) / FRICTION);
@@ -1362,6 +1394,9 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		 * Disables Pull-to-Refresh gesture handling, but allows manually
 		 * setting the Refresh state via
 		 * {@link PullToRefreshBase#setRefreshing() setRefreshing()}.
+		 * 
+		 * <p>无法通过手势来刷新界面，但可以通过手动调用方法
+		 * {@link PullToRefreshBase#setRefreshing() setRefreshing()}。</p>
 		 */
 		MANUAL_REFRESH_ONLY(0x4);
 
@@ -1406,6 +1441,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		}
 
 		/**
+		 * 是否允许通过手势来刷新界面的操作。
 		 * @return true if the mode permits Pull-to-Refresh
 		 */
 		boolean permitsPullToRefresh() {

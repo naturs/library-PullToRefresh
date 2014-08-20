@@ -40,7 +40,7 @@ public interface IPullToRefresh<T extends View> {
 	/**
 	 * Get the mode that this view is currently in. This is only really useful
 	 * when using <code>Mode.BOTH</code>.
-	 * 
+	 * <p>仅仅在使用Mode.BOTH的时候有用，因为Mode.BOTH包含了两个模式</p>
 	 * @return Mode that the view is currently in
 	 */
 	public Mode getCurrentMode();
@@ -51,6 +51,12 @@ public interface IPullToRefresh<T extends View> {
 	 * in the Y-axis is greater than the difference in the X-axis. This means
 	 * that the View will not interfere when it is used in a horizontal
 	 * scrolling View (such as a ViewPager).
+	 * 
+	 * <p>
+	 * 过滤事件的含义：如果当前是ListView，如果在X轴上滚动的距离大于
+	 * 在Y轴上滚动的距离，那就不要处理这个滚动，因为ListView是垂直
+	 * 滚动的。
+	 * </p>
 	 * 
 	 * @return boolean - true if the View is filtering Touch Events
 	 */
@@ -141,7 +147,7 @@ public interface IPullToRefresh<T extends View> {
 	/**
 	 * Returns whether the widget has enabled scrolling on the Refreshable View
 	 * while refreshing.
-	 * 
+	 * <p>是否允许页面在正在刷新的时候进行滚动操作</p>
 	 * @return true if the widget has enabled scrolling while refreshing
 	 */
 	public boolean isScrollingWhileRefreshingEnabled();

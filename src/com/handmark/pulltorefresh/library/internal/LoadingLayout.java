@@ -71,6 +71,7 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 
 		switch (scrollDirection) {
 			case HORIZONTAL:
+				// 在代码中inflate一个以merge为根元素的布局文件时候，你需要指定一个ViewGroup作为其容器，并且要设置attachToRoot为true
 				LayoutInflater.from(context).inflate(R.layout.pull_to_refresh_header_horizontal, this);
 				break;
 			case VERTICAL:
@@ -223,11 +224,16 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		}
 	}
 
+	/**
+	 * 下拉刷新
+	 */
 	public final void pullToRefresh() {
 		if (null != mHeaderText) {
 			mHeaderText.setText(mPullLabel);
 		}
-
+		
+		Utils.logd(LOG_TAG, "pullToRefresh方法");
+		
 		// Now call the callback
 		pullToRefreshImpl();
 	}
