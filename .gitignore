@@ -3,7 +3,7 @@ bin
 gen
 
 #Eclipse
-#.project
+.project
 .classpath
 .settings
 
