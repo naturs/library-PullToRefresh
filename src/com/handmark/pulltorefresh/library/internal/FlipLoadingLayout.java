@@ -89,6 +89,8 @@ public class FlipLoadingLayout extends LoadingLayout {
 
 	@Override
 	protected void pullToRefreshImpl() {
+		// 实现FlipLoadingLayout在下拉刷新过程中的动画
+		
 		// Only start reset Animation, we've previously show the rotate anim
 		if (mRotateAnimation == mHeaderImage.getAnimation()) {
 			mHeaderImage.startAnimation(mResetRotateAnimation);

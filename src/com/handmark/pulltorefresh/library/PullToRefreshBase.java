@@ -17,6 +17,7 @@ package com.handmark.pulltorefresh.library;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
@@ -612,7 +613,9 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	protected LoadingLayout createLoadingLayout(Context context, Mode mode, TypedArray attrs) {
 		LoadingLayout layout = mLoadingAnimationStyle.createLoadingLayout(context, mode,
 				getPullToRefreshScrollDirection(), attrs);
-		layout.setVisibility(View.INVISIBLE);
+		// TODO INVISIBLE
+		layout.setVisibility(View.VISIBLE);
+		layout.setBackgroundColor(Color.CYAN);
 		return layout;
 	}
 
@@ -1110,6 +1113,9 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 				break;
 		}
 
+		/**
+		 * 你大爷的。。。。
+		 */
 		setGravity(Gravity.CENTER);
 
 		ViewConfiguration config = ViewConfiguration.get(context);
@@ -1195,7 +1201,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 	 */
 	private void pullEvent() {
 		final int newScrollValue;
-		final int itemDimension;
+		final int itemDimension; // 显示刷新的那一块的大小
 		final float initialMotionValue, lastMotionValue;
 
 		switch (getPullToRefreshScrollDirection()) {
@@ -1225,6 +1231,8 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		setHeaderScroll(newScrollValue);
 
 		if (newScrollValue != 0 && !isRefreshing()) {
+			// 拖动的比例，这个主要是用在RotateLoadingLayout中，一边拖动的时候，
+			// header image会转动。
 			float scale = Math.abs(newScrollValue) / (float) itemDimension;
 			switch (mCurrentMode) {
 				case PULL_FROM_END:
@@ -1236,6 +1244,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 					break;
 			}
 
+			// itemDimension >= Math.abs(newScrollValue)代表了松开还不能刷新的状态
 			if (mState != State.PULL_TO_REFRESH && itemDimension >= Math.abs(newScrollValue)) {
 				setState(State.PULL_TO_REFRESH);
 			} else if (mState == State.PULL_TO_REFRESH && itemDimension < Math.abs(newScrollValue)) {
@@ -1557,6 +1566,11 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		VERTICAL, HORIZONTAL;
 	}
 
+	/**
+	 * 状态
+	 * @author mybeta
+	 *
+	 */
 	public static enum State {
 
 		/**

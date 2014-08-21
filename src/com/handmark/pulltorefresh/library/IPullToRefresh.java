@@ -40,7 +40,7 @@ public interface IPullToRefresh<T extends View> {
 	/**
 	 * Get the mode that this view is currently in. This is only really useful
 	 * when using <code>Mode.BOTH</code>.
-	 * <p>仅仅在使用Mode.BOTH的时候有用，因为Mode.BOTH包含了两个模式</p>
+	 *
 	 * @return Mode that the view is currently in
 	 */
 	public Mode getCurrentMode();
