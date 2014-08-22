@@ -85,7 +85,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 
 	private boolean mShowViewWhileRefreshing = true;
 	/** 刷新的时候是否可以滚动*/
-	private boolean mScrollingWhileRefreshingEnabled = false;
+	private boolean mScrollingWhileRefreshingEnabled = true;
 	/** 是否要过滤事件*/
 	private boolean mFilterTouchEvents = true;
 	private boolean mOverScrollEnabled = true;
@@ -322,17 +322,9 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		return mIsBeingDragged;
 	}
 
-	@Override
-	public final void onRefreshComplete() {
-		if (isRefreshing()) {
-			setState(State.RESET);
-		}
-	}
-
 	// 一旦把事件拦截下来，接下来的事件都会传到下面这个方法里
 	@Override
 	public final boolean onTouchEvent(MotionEvent event) {
-
 		if (!isPullToRefreshEnabled()) {
 			return false;
 		}
@@ -359,6 +351,22 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 				break;
 			}
 
+			/**
+			 * 执行到这里返回true有两种情况：
+			 * 1. onInterceptTouchEvent中返回true，这时候一般mIsBeingDragged也为true
+			 * 2. 如果当前LinearLayout所有的子View都没有接受事件，而isReadyForPull()
+			 *    返回了true，那么该LinearLayout也会继续接受后续事件，但这时候
+			 *    mIsBeingDragged一般都是false的，所以这时候LinearLayout接受的事件其
+			 *    实是没有什么意义的。
+			 *    比如ListView中没有数据并且设置了EmptyView的情况，这时候的布局结构
+			 *    是LinearLayout->FrameLayout->EmptyView，如果EmptyView没法获取事件，
+			 *    就会出现上面的情况。因为这时候ListView是View.GONE状态。
+			 * 3. 当页面没有数据的时候，我们也要进行下拉刷新操作，所以我们要保证
+			 *    mIsBeingDragged为true，所以当前的LinearLayout不能是整个事件的
+			 *    target view，而应该让它的子Vie我接受事件，解决方法为
+			 *    PullToRefreshAdapterViewBase.setEmptyView()方法。
+			 *    
+			 */
 			case MotionEvent.ACTION_DOWN: {
 				if (isReadyForPull()) {
 					mLastMotionY = mInitialMotionY = event.getY();
@@ -396,6 +404,13 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		}
 
 		return false;
+	}
+	
+	@Override
+	public final void onRefreshComplete() {
+		if (isRefreshing()) {
+			setState(State.RESET);
+		}
 	}
 
 	public final void setScrollingWhileRefreshingEnabled(boolean allowScrollingWhileRefreshing) {
@@ -1082,6 +1097,8 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 
 	private void addRefreshableView(Context context, T refreshableView) {
 		mRefreshableViewWrapper = new FrameLayout(context);
+		//TODO
+		refreshableView.setBackgroundColor(Color.YELLOW);
 		mRefreshableViewWrapper.addView(refreshableView, ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.MATCH_PARENT);
 

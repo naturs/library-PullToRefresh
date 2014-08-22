@@ -74,7 +74,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 			return;
 		}
 
-		super.onRefreshing(false);
+		super.onRefreshing(false); // 作用：call listener
 
 		final LoadingLayout origLoadingView, listViewLoadingView, oppositeListViewLoadingView;
 		final int selection, scrollToY;
@@ -100,7 +100,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 
 		// Hide our original Loading View
 		origLoadingView.reset();
-		origLoadingView.hideAllViews();
+		origLoadingView.hideAllViews(); // to INVISIBLE
 
 		// Make sure the opposite end is hidden too
 		oppositeListViewLoadingView.setVisibility(View.GONE);

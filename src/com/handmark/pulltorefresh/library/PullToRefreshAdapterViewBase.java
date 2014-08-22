@@ -63,6 +63,12 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 	private IndicatorLayout mIndicatorIvBottom;
 
 	private boolean mShowIndicator;
+	
+	/**
+	 * 是否滚动EmptyView。当页面没有数据时，默认情况是当下拉刷新
+	 * 时EmptyView会随着下拉而移动，但这里设置为false后，下拉刷新
+	 * 时EmptyView就不会移动了。
+	 */
 	private boolean mScrollEmptyView = true;
 
 	public PullToRefreshAdapterViewBase(Context context) {
@@ -99,6 +105,7 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 		return mShowIndicator;
 	}
 
+	@Override
 	public final void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount,
 			final int totalItemCount) {
 
@@ -126,6 +133,7 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 		}
 	}
 
+	@Override
 	public final void onScrollStateChanged(final AbsListView view, final int state) {
 		/**
 		 * Check that the scrolling has stopped, and that the last item is
@@ -171,6 +179,10 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 		if (null != newEmptyView) {
 			// New view needs to be clickable so that Android recognizes it as a
 			// target for Touch Events
+			/**
+			 * 这一句非常重要，详情参考PullToRefreshBase的onTouchEvent()方法。
+			 * 上面的英文注释也很到位。
+			 */
 			newEmptyView.setClickable(true);
 
 			ViewParent newEmptyViewParent = newEmptyView.getParent();
@@ -184,10 +196,15 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 			if (null != lp) {
 				refreshableViewWrapper.addView(newEmptyView, lp);
 			} else {
+				// 注意：FrameLayout默认生成的是
+				// new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)，
+				// 所以这种情况下，empty view会占满整个FrameLayout。
 				refreshableViewWrapper.addView(newEmptyView);
 			}
 		}
 
+		// 把empty view真正的设置到ListView中去，ListView就会根据它自己的状态来
+		// 来控制它自己和empty view的显示。
 		if (mRefreshableView instanceof EmptyViewMethodAccessor) {
 			((EmptyViewMethodAccessor) mRefreshableView).setEmptyViewInternal(newEmptyView);
 		} else {
@@ -212,6 +229,10 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 		mOnLastItemVisibleListener = listener;
 	}
 
+	/**
+	 * 设置滚动监听事件，注意这个是设置到LinearLayout上的，但是作用在ListView上
+	 * @param listener
+	 */
 	public final void setOnScrollListener(OnScrollListener listener) {
 		mOnScrollListener = listener;
 	}
