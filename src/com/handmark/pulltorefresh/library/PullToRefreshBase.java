@@ -1247,6 +1247,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 
 		setHeaderScroll(newScrollValue);
 
+		// 注意：如果isRefreshing()为true，除了移动界面，其他的事都不做
 		if (newScrollValue != 0 && !isRefreshing()) {
 			// 拖动的比例，这个主要是用在RotateLoadingLayout中，一边拖动的时候，
 			// header image会转动。
@@ -1358,7 +1359,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		FLIP;
 
 		static AnimationStyle getDefault() {
-			return ROTATE;
+			return FLIP;
 		}
 
 		/**

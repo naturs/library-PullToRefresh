@@ -203,6 +203,9 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		}
 	}
 
+	/**
+	 * 将所有可见的控件设置为INVISIBLE状态
+	 */
 	public final void hideAllViews() {
 		if (View.VISIBLE == mHeaderText.getVisibility()) {
 			mHeaderText.setVisibility(View.INVISIBLE);
@@ -215,6 +218,24 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		}
 		if (View.VISIBLE == mSubHeaderText.getVisibility()) {
 			mSubHeaderText.setVisibility(View.INVISIBLE);
+		}
+	}
+	
+	/**
+	 * 这个方法和上面的方法是相对应的
+	 */
+	public final void showInvisibleViews() {
+		if (View.INVISIBLE == mHeaderText.getVisibility()) {
+			mHeaderText.setVisibility(View.VISIBLE);
+		}
+		if (View.INVISIBLE == mHeaderProgress.getVisibility()) {
+			mHeaderProgress.setVisibility(View.VISIBLE);
+		}
+		if (View.INVISIBLE == mHeaderImage.getVisibility()) {
+			mHeaderImage.setVisibility(View.VISIBLE);
+		}
+		if (View.INVISIBLE == mSubHeaderText.getVisibility()) {
+			mSubHeaderText.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -238,6 +259,9 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		pullToRefreshImpl();
 	}
 
+	/**
+	 * 释放刷新 -> 刷新
+	 */
 	public final void refreshing() {
 		if (null != mHeaderText) {
 			mHeaderText.setText(mRefreshingLabel);
@@ -255,6 +279,9 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		}
 	}
 
+	/**
+	 * 下拉刷新 -> 释放刷新
+	 */
 	public final void releaseToRefresh() {
 		if (null != mHeaderText) {
 			mHeaderText.setText(mReleaseLabel);
@@ -264,6 +291,9 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 		releaseToRefreshImpl();
 	}
 
+	/**
+	 * 还原到最初状态
+	 */
 	public final void reset() {
 		if (null != mHeaderText) {
 			mHeaderText.setText(mPullLabel);
@@ -315,21 +345,6 @@ public abstract class LoadingLayout extends FrameLayout implements ILoadingLayou
 	@Override
 	public void setTextTypeface(Typeface tf) {
 		mHeaderText.setTypeface(tf);
-	}
-
-	public final void showInvisibleViews() {
-		if (View.INVISIBLE == mHeaderText.getVisibility()) {
-			mHeaderText.setVisibility(View.VISIBLE);
-		}
-		if (View.INVISIBLE == mHeaderProgress.getVisibility()) {
-			mHeaderProgress.setVisibility(View.VISIBLE);
-		}
-		if (View.INVISIBLE == mHeaderImage.getVisibility()) {
-			mHeaderImage.setVisibility(View.VISIBLE);
-		}
-		if (View.INVISIBLE == mSubHeaderText.getVisibility()) {
-			mSubHeaderText.setVisibility(View.VISIBLE);
-		}
 	}
 
 	/**

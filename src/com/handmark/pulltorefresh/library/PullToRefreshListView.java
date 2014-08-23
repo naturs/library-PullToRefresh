@@ -62,6 +62,19 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 		return Orientation.VERTICAL;
 	}
 
+	///////////////////////////////////////////////////////////////////////////////
+	/**
+	 * 对PullToRefreshListView的下拉刷新，采用了一个“偷梁换柱”的方法。在PullToRefreshBase中
+	 * 是通过scrollTo()方法移动整个内容，让隐藏在屏幕外的header/footer显示出来，如果处于刷新状
+	 * 态了，再拖动屏幕，PullToRefreshBase中设计的是直接scrollTo(0)，所以整个header/footer
+	 * 会隐藏掉，然后重新拖出来，这显然不好。
+	 * 所以当前类做了些许改变，在初始化的时候就给ListView添加了header和footer，默认都隐藏。然后
+	 * 在刷新的瞬间（ReleaseToRefresh -> Refreshing），将header显示出来，并将原来的header隐
+	 * 藏掉，随后将整个内容scrollTo(0)。所以在刷新的时候看到的header已经不是原来的header了。
+	 */
+	///////////////////////////////////////////////////////////////////////////////
+	
+	
 	@Override
 	protected void onRefreshing(final boolean doScroll) {
 		/**
@@ -94,6 +107,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 				listViewLoadingView = mHeaderLoadingView;
 				oppositeListViewLoadingView = mFooterLoadingView;
 				selection = 0;
+				// 因为添加了一个header，要让整个内容向上移动getHeaderSize()的距离
 				scrollToY = getScrollY() + getHeaderSize();
 				break;
 		}
@@ -101,16 +115,23 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 		// Hide our original Loading View
 		origLoadingView.reset();
 		origLoadingView.hideAllViews(); // to INVISIBLE
+		// 这一句不能替换上一句。其实我们至始至终都要注意
+		// 是不是可以设置header/footer的可见性，一般是
+		// 设置里面内容的可见性，如果是设置整个header/
+		// footer的可见性，很可能会把显示出整个LinearLayout
+		// 的背景色。
+		// origLoadingView.setVisibility(View.INVISIBLE);
 
 		// Make sure the opposite end is hidden too
 		oppositeListViewLoadingView.setVisibility(View.GONE);
 
 		// Show the ListView Loading View and set it to refresh.
-		listViewLoadingView.setVisibility(View.VISIBLE);
-		listViewLoadingView.refreshing();
+		listViewLoadingView.setVisibility(View.VISIBLE); // 这里要设置为可见
+		listViewLoadingView.refreshing(); // 并置为刷新状态
 
-		if (doScroll) {
+		if (doScroll) { // 这里一般都为true
 			// We need to disable the automatic visibility changes for now
+			// 其实这个在这里没什么用
 			disableLoadingLayoutVisibilityChanges();
 
 			// We scroll slightly so that the ListView's header/footer is at the
@@ -123,9 +144,20 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 
 			// Smooth scroll as normal
 			smoothScrollTo(0);
+			
+			// 如果用下面这句，就没有平滑滚动效果了
+			// scrollTo(0, 0);
 		}
 	}
 
+	/////////////////////////////////////////////////
+	/**
+	 * onReset()方法和上面的onRefreshing()方法相反，当刷新
+	 * 完成的时候，隐藏ListView中的header，显示原来的header，
+	 * 并移动界面使原来的header显示出来。
+	 */
+	/////////////////////////////////////////////////
+	
 	@Override
 	protected void onReset() {
 		/**
@@ -212,6 +244,8 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 		return lv;
 	}
 
+	// 当前的PullToRefreshListView是LinearLayout，但是我们在XML文件中直接设置
+	// ListView的属性也能生效，就是应该这个方法。
 	@Override
 	protected ListView createRefreshableView(Context context, AttributeSet attrs) {
 		ListView lv = createListView(context, attrs);
@@ -225,6 +259,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 	protected void handleStyledAttributes(TypedArray a) {
 		super.handleStyledAttributes(a);
 
+		// 默认就为true
 		mListViewExtrasEnabled = a.getBoolean(R.styleable.PullToRefresh_ptrListViewExtrasEnabled, true);
 
 		if (mListViewExtrasEnabled) {
@@ -234,12 +269,14 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 			// Create Loading Views ready for use later
 			FrameLayout frame = new FrameLayout(getContext());
 			mHeaderLoadingView = createLoadingLayout(getContext(), Mode.PULL_FROM_START, a);
+			// 注意：这里设置为GONE，整个header会完全隐藏，不会占用一个item的空间
 			mHeaderLoadingView.setVisibility(View.GONE);
 			frame.addView(mHeaderLoadingView, lp);
 			mRefreshableView.addHeaderView(frame, null, false);
 
 			mLvFooterLoadingFrame = new FrameLayout(getContext());
 			mFooterLoadingView = createLoadingLayout(getContext(), Mode.PULL_FROM_END, a);
+			// 这里同上
 			mFooterLoadingView.setVisibility(View.GONE);
 			mLvFooterLoadingFrame.addView(mFooterLoadingView, lp);
 
@@ -247,6 +284,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 			 * If the value for Scrolling While Refreshing hasn't been
 			 * explicitly set via XML, enable Scrolling While Refreshing.
 			 */
+			// 默认为true
 			if (!a.hasValue(R.styleable.PullToRefresh_ptrScrollingWhileRefreshingEnabled)) {
 				setScrollingWhileRefreshingEnabled(true);
 			}
