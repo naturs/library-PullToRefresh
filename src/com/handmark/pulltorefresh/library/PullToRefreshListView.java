@@ -245,7 +245,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 	}
 
 	// 当前的PullToRefreshListView是LinearLayout，但是我们在XML文件中直接设置
-	// ListView的属性也能生效，就是应该这个方法。
+	// ListView的属性也能生效，就是因为这个方法。
 	@Override
 	protected ListView createRefreshableView(Context context, AttributeSet attrs) {
 		ListView lv = createListView(context, attrs);
@@ -296,6 +296,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 
 		public InternalListViewSDK9(Context context, AttributeSet attrs) {
 			super(context, attrs);
+//			setOverScrollMode(View.OVER_SCROLL_NEVER);
 		}
 
 		@Override
@@ -310,6 +311,7 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 
 			return returnValue;
 		}
+		
 	}
 
 	protected class InternalListView extends ListView implements EmptyViewMethodAccessor {

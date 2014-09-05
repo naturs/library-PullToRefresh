@@ -128,6 +128,7 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 		mMode = mode;
 		mLoadingAnimationStyle = animStyle;
 		init(context, null);
+		setBackgroundResource(R.drawable.dynamic_main_bg_default);
 	}
 
 	// ============================================================================
@@ -1097,8 +1098,6 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 
 	private void addRefreshableView(Context context, T refreshableView) {
 		mRefreshableViewWrapper = new FrameLayout(context);
-		//TODO
-		refreshableView.setBackgroundColor(Color.YELLOW);
 		mRefreshableViewWrapper.addView(refreshableView, ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.MATCH_PARENT);
 
